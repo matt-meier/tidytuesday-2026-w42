@@ -8,6 +8,29 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="src/styles.css" />
+  <style>
+    /* Keep bottom quadrant callouts paired in two columns and place Key Finding below them */
+    .quadrant-band-bottom {
+      grid-template-columns: 1fr 1fr;
+      padding-left: 64px;
+    }
+
+    .key-finding-card {
+      width: 100%;
+      text-align: center;
+    }
+
+    @media (max-width: 860px) {
+      .quadrant-band-bottom {
+        grid-template-columns: 1fr;
+        padding-left: 0;
+      }
+
+      .key-finding-card {
+        text-align: left;
+      }
+    }
+  </style>
 </head>
 <body>
   <main class="poster" id="poster" aria-label="AI Occupational Exposure versus Graduate Starting Salary Infographic">
@@ -82,7 +105,7 @@
         <svg id="scatter-svg" class="scatter-svg" viewBox="0 0 802 478" role="img" aria-label="Scatter plot comparing AI occupational exposure against median starting salary for U.S. college majors"></svg>
       </div>
 
-      <!-- Bottom Callout Band: Sits strictly BELOW the X-axis -->
+      <!-- Bottom Callout Band: Paired Quadrant Cards Strictly Below the X-Axis -->
       <div class="quadrant-band quadrant-band-bottom">
         <button type="button" class="quadrant-card card-havens" data-quadrant="havens" aria-pressed="false">
           <span class="card-pointer pointer-up" aria-hidden="true"></span>
@@ -94,8 +117,6 @@
           <p class="card-body">Education, culinary, agriculture, and recreation rely on in-person work that limits AI overlap, though starting salaries lag.</p>
         </button>
 
-
-
         <button type="button" class="quadrant-card card-squeezed" data-quadrant="squeezed" aria-pressed="false">
           <span class="card-pointer pointer-up" aria-hidden="true"></span>
           <div class="card-header">
@@ -106,15 +127,15 @@
           <p class="card-body">Communications, journalism, and writing majors pair modest starting pay with heavy overlap across text and image AI tools.</p>
         </button>
       </div>
-	  
-	          <aside class="key-finding-card" aria-label="Key finding summary">
-          <div class="key-finding-label">KEY FINDING</div>
-          <p>
-            You do not have to choose between high pay and AI safety, but data-heavy desk majors sit directly in the path of generative AI.
-          </p>
-          <p class="interaction-hint">Click any field or zone card to isolate majors. Hover any dot for details.</p>
-        </aside>
-		
+
+      <!-- Key Finding Card: Stands Below the Bottom Callouts on Desktop and Mobile -->
+      <aside class="key-finding-card" aria-label="Key finding summary">
+        <div class="key-finding-label">KEY FINDING</div>
+        <p>
+          You do not have to choose between high pay and AI safety, but data-heavy desk majors sit directly in the path of generative AI.
+        </p>
+        <p class="interaction-hint">Click any field or zone card to isolate majors. Hover any dot for details.</p>
+      </aside>
     </section>
 
     <!-- Personalized Branded Footer (Asymmetric Corner Radius: 0 50px 0 50px, 45px height) -->
