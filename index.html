@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Can You Outrun the Algorithm? | AI Exposure vs. Graduate Pay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="src/styles.css" />
+</head>
+<body>
+  <main class="poster" id="poster" aria-label="AI Occupational Exposure versus Graduate Starting Salary Infographic">
+    <!-- Subtle editorial frame accents -->
+    <div class="frame-accent frame-accent-top" aria-hidden="true"></div>
+
+    <!-- Header Section (TidyTuesday top pill intentionally omitted; included in footer) -->
+    <header class="poster-header">
+      <div class="header-rule-row" aria-hidden="true">
+        <span class="mini-bars">
+          <i></i><i></i><i></i><i></i><i></i><i></i>
+        </span>
+        <span class="rule-line"></span>
+        <span class="mini-ticks"></span>
+      </div>
+
+      <h1 class="main-title">
+        <span class="title-line-accent">CAN YOU OUTRUN</span>
+        <span class="title-line-primary">THE ALGORITHM?</span>
+      </h1>
+
+      <p class="subtitle">
+        Mapping <strong>AI Occupational Exposure</strong> vs. <strong>Median Starting Pay</strong> Across <span id="major-count-badge">285</span> U.S. College Majors
+      </p>
+
+      <p class="lead-context">
+        High AI overlap does not equal low pay. Many top-earning business, legal, and tech majors sit squarely in the path of generative AI, while hands-on healthcare and engineering fields combine strong salaries with lower exposure.
+      </p>
+    </header>
+
+    <!-- Main Graphic Canvas -->
+    <section class="viz-stage" aria-label="Interactive scatter plot of college majors">
+      <div class="viz-container" id="viz-container">
+        <!-- Loading / Status overlay -->
+        <div class="status-overlay" id="status-overlay" role="status" aria-live="polite">
+          <div class="spinner" aria-hidden="true"></div>
+          <p id="status-text">Loading TidyTuesday 2026 Week 42 dataset...</p>
+        </div>
+
+        <!-- SVG Scatter Plot rendered dynamically by src/app.js -->
+        <svg id="scatter-svg" class="scatter-svg" viewBox="0 0 802 742" role="img" aria-label="Scatter plot comparing AI occupational exposure against median starting salary for 285 college majors"></svg>
+
+        <!-- Quadrant Callout: Top-Left -->
+        <aside class="quadrant-card card-fortified" aria-label="The Fortified Zone callout">
+          <div class="card-header">
+            <h2 class="card-title">THE FORTIFIED ZONE</h2>
+            <span class="card-count" id="count-fortified"></span>
+          </div>
+          <p class="card-sub">High pay, lower AI exposure</p>
+          <p class="card-body">Healthcare, nursing, and specialized engineering majors earn strong starting pay while staying insulated by hands-on clinical or physical work.</p>
+        </aside>
+
+        <!-- Quadrant Callout: Top-Right -->
+        <aside class="quadrant-card card-paydays" aria-label="High-Exposure Paydays callout">
+          <div class="card-header">
+            <h2 class="card-title">HIGH-EXPOSURE PAYDAYS</h2>
+            <span class="card-count" id="count-paydays"></span>
+          </div>
+          <p class="card-sub">High pay, high AI exposure</p>
+          <p class="card-body">Finance, computer science, and legal majors overlap heavily with AI yet command top salaries, indicating AI may amplify rather than replace these roles.</p>
+        </aside>
+
+        <!-- Interactive Field Legend -->
+        <aside class="legend-card" aria-label="Field category legend">
+          <div class="legend-heading">
+            <span>BROAD FIELD</span>
+            <button type="button" class="legend-reset" id="legend-reset" hidden>Show all</button>
+          </div>
+          <ul class="legend-list" id="legend-list"></ul>
+          <p class="legend-cue">Click a field to spotlight. Hover dots for major details.</p>
+        </aside>
+
+        <!-- Quadrant Callout: Bottom-Left -->
+        <aside class="quadrant-card card-havens" aria-label="Hands-On Havens callout">
+          <div class="card-header">
+            <h2 class="card-title">HANDS-ON HAVENS</h2>
+            <span class="card-count" id="count-havens"></span>
+          </div>
+          <p class="card-sub">Lower pay, lower AI exposure</p>
+          <p class="card-body">Education, culinary, agriculture, and recreation majors rely on in-person human work that limits AI overlap, though starting salaries lag.</p>
+        </aside>
+
+        <!-- Quadrant Callout: Bottom-Right -->
+        <aside class="quadrant-card card-squeezed" aria-label="The Squeezed Zone callout">
+          <div class="card-header">
+            <h2 class="card-title">THE SQUEEZED ZONE</h2>
+            <span class="card-count" id="count-squeezed"></span>
+          </div>
+          <p class="card-sub">Lower pay, high AI exposure</p>
+          <p class="card-body">Communications, journalism, and writing-focused majors pair modest starting pay with heavy overlap across text and image generation tools.</p>
+        </aside>
+
+        <!-- Key Finding Callout -->
+        <aside class="key-finding-card" aria-label="Key finding summary">
+          <p>
+            <strong>KEY FINDING:</strong> You do not have to choose between high pay and AI safety, but data-heavy desk majors sit directly in the path of generative AI.
+          </p>
+        </aside>
+      </div>
+
+      <!-- Subtle X-Axis Exposure Metric Toggle -->
+      <div class="metric-bar" role="group" aria-label="Select AI exposure measure">
+        <span class="metric-bar-label">EXPOSURE LENS:</span>
+        <button type="button" class="metric-btn is-active" data-metric="ai_exposure">Overall AIOE</button>
+        <button type="button" class="metric-btn" data-metric="ai_exposure_language">Language AI</button>
+        <button type="button" class="metric-btn" data-metric="ai_exposure_image">Image AI</button>
+      </div>
+    </section>
+
+    <!-- Personalized Branded Footer (Asymmetric Corner Radius: 0 50px 0 50px, 45px height) -->
+    <footer class="branded-footer" aria-label="Visualization attribution and profile links">
+      <div class="footer-icons">
+        <a
+          href="https://www.linkedin.com/in/meier2k8/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="footer-icon-link"
+          aria-label="Matt Meier on LinkedIn"
+          title="LinkedIn: Matt Meier"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+            <path d="M19 3A2 2 0 0 1 21 5V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H19M18.5 18.5V13.2A3.26 3.26 0 0 0 15.24 9.94C14.39 9.94 13.4 10.46 12.92 11.24V10.13H10.13V18.5H12.92V13.57C12.92 12.8 13.54 12.17 14.31 12.17A1.4 1.4 0 0 1 15.71 13.57V18.5H18.5M6.88 8.56A1.68 1.68 0 0 0 8.56 6.88C8.56 5.95 7.81 5.19 6.88 5.19A1.69 1.69 0 0 0 5.19 6.88C5.19 7.81 5.95 8.56 6.88 8.56M8.27 18.5V10.13H5.5V18.5H8.27Z" />
+          </svg>
+        </a>
+        <a
+          href="https://public.tableau.com/app/profile/matt5450/vizzes"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="footer-icon-link"
+          aria-label="Matt Meier on Tableau Public"
+          title="Tableau Public: Matt Meier"
+        >
+          <svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor" aria-hidden="true">
+            <path d="M11.65 1.5h.7v2.45h2.45v.7h-2.45V7.1h-.7V4.65H9.2v-.7h2.45V1.5zm0 15.4h.7v2.45h2.45v.7h-2.45v2.45h-.7v-2.45H9.2v-.7h2.45V16.9zM1.5 11.65h2.45V9.2h.7v2.45H7.1v.7H4.65v2.45h-.7v-2.45H1.5v-.7zm15.4 0h2.45V9.2h.7v2.45h2.45v.7h-2.45v2.45h-.7v-2.45H16.9v-.7zM11.4 8.2h1.2v3.2h3.2v1.2h-3.2v3.2h-1.2v-3.2H8.2v-1.2h3.2V8.2zM5.65 4.8h.7v1.7h1.7v.7h-1.7v1.7h-.7V7.2h-1.7v-.7h1.7V4.8zm12 0h.7v1.7h1.7v.7h-1.7v1.7h-.7V7.2h-1.7v-.7h1.7V4.8zm-12 10.3h.7v1.7h1.7v.7h-1.7v1.7h-.7v-1.7h-1.7v-.7h1.7v-1.7zm12 0h.7v1.7h1.7v.7h-1.7v1.7h-.7v-1.7h-1.7v-.7h1.7v-1.7z" />
+          </svg>
+        </a>
+      </div>
+      <div class="footer-text">
+        <span>CREATED BY MATT MEIER</span><span class="footer-sep">&nbsp;&nbsp;|&nbsp;&nbsp;</span><span>#TIDYTUESDAY 2026 WEEK 42</span><span class="footer-sep">&nbsp;&nbsp;|&nbsp;&nbsp;</span><span>SOURCE: COLLEGE SCORECARD &amp; FELTEN ET AL. (AIOE)</span>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Floating Narrative Tooltip -->
+  <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+
+  <script src="src/app.js"></script>
+</body>
+</html>
