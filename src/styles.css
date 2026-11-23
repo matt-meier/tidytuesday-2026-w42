@@ -173,7 +173,7 @@ body {
   font-weight: 600;
 }
 
-/* Inline Legend & Exposure Lens Control Strip (Strictly outside the plot) */
+/* Inline Legend, Exposure Lens & Circle Size Control Strip (Strictly outside the plot) */
 .control-strip {
   display: flex;
   flex-direction: column;
@@ -262,6 +262,22 @@ body {
   background: rgba(228, 247, 102, 0.24);
 }
 
+.control-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  width: 100%;
+}
+
+.control-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(141, 162, 194, 0.28);
+  flex-shrink: 0;
+}
+
 .metric-bar {
   display: flex;
   align-items: center;
@@ -302,6 +318,51 @@ body {
   font-weight: 600;
 }
 
+/* Circle Size Legend (Proportional Graduate Volume) */
+.size-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.size-legend[hidden] {
+  display: none;
+}
+
+.size-legend-label {
+  font-size: 9.6px;
+  font-weight: 600;
+  letter-spacing: 0.75px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.size-legend-items {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.size-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.size-legend-svg {
+  display: block;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+.size-legend-val {
+  font-size: 9.8px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* Main Visualization Stage: Dedicated Stacked Bands */
 .viz-stage {
   display: flex;
@@ -317,13 +378,10 @@ body {
   width: 100%;
 }
 
-.quadrant-band-top {
-  grid-template-columns: 1fr 1fr;
-  padding-left: 64px; /* Aligns left card cleanly with plot Y-axis */
-}
-
+.quadrant-band-top,
 .quadrant-band-bottom {
-  grid-template-columns: 1fr 1.06fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  padding-left: 64px; /* Aligns left cards cleanly with plot Y-axis */
 }
 
 /* Quadrant Editorial Callout Cards (Interactive spotlight triggers) */
@@ -447,12 +505,14 @@ body {
   color: var(--ink-secondary);
 }
 
-/* Center Key Finding Card */
+/* Full-Width Key Finding Card (Stands Below Bottom Callouts on Desktop and Mobile) */
 .key-finding-card {
+  width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 9px 12px;
+  text-align: center;
+  padding: 9px 14px;
   border-radius: 9px;
   background: rgba(14, 27, 54, 0.88);
   border: 1px solid rgba(228, 247, 102, 0.38);
@@ -468,7 +528,7 @@ body {
 }
 
 .key-finding-card p {
-  font-size: 10.1px;
+  font-size: 10.2px;
   line-height: 1.4;
   color: var(--ink-primary);
 }
@@ -739,13 +799,18 @@ body {
     font-size: 32px;
   }
 
-  .quadrant-band-top {
+  .control-divider {
+    display: none;
+  }
+
+  .quadrant-band-top,
+  .quadrant-band-bottom {
     grid-template-columns: 1fr;
     padding-left: 0;
   }
 
-  .quadrant-band-bottom {
-    grid-template-columns: 1fr;
+  .key-finding-card {
+    text-align: left;
   }
 
   .card-pointer {

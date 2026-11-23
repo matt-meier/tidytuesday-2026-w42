@@ -8,29 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="src/styles.css" />
-  <style>
-    /* Keep bottom quadrant callouts paired in two columns and place Key Finding below them */
-    .quadrant-band-bottom {
-      grid-template-columns: 1fr 1fr;
-      padding-left: 64px;
-    }
-
-    .key-finding-card {
-      width: 100%;
-      text-align: center;
-    }
-
-    @media (max-width: 860px) {
-      .quadrant-band-bottom {
-        grid-template-columns: 1fr;
-        padding-left: 0;
-      }
-
-      .key-finding-card {
-        text-align: left;
-      }
-    }
-  </style>
 </head>
 <body>
   <main class="poster" id="poster" aria-label="AI Occupational Exposure versus Graduate Starting Salary Infographic">
@@ -56,17 +33,27 @@
       </p>
     </header>
 
-    <!-- Control Strip: Inline Interactive Field Legend + Exposure Lens (Outside the chart) -->
-    <section class="control-strip" aria-label="Filter by broad field or switch AI exposure lens">
+    <!-- Control Strip: Broad Field Legend, Exposure Lens & Circle Size Callout -->
+    <section class="control-strip" aria-label="Filter by broad field, switch AI exposure lens, and inspect circle size scale">
       <div class="legend-strip" role="group" aria-label="Broad field filter">
         <ul class="legend-list" id="legend-list"></ul>
         <button type="button" class="legend-reset" id="legend-reset" hidden>Reset</button>
       </div>
-      <div class="metric-bar" role="group" aria-label="Select AI exposure measure">
-        <span class="metric-bar-label">LENS:</span>
-        <button type="button" class="metric-btn is-active" data-metric="ai_exposure">Overall AIOE</button>
-        <button type="button" class="metric-btn" data-metric="ai_exposure_language">Language AI</button>
-        <button type="button" class="metric-btn" data-metric="ai_exposure_image">Image AI</button>
+
+      <div class="control-meta-row">
+        <div class="metric-bar" role="group" aria-label="Select AI exposure measure">
+          <span class="metric-bar-label">LENS:</span>
+          <button type="button" class="metric-btn is-active" data-metric="ai_exposure">Overall AIOE</button>
+          <button type="button" class="metric-btn" data-metric="ai_exposure_language">Language AI</button>
+          <button type="button" class="metric-btn" data-metric="ai_exposure_image">Image AI</button>
+        </div>
+
+        <span class="control-divider" aria-hidden="true"></span>
+
+        <div class="size-legend" id="size-legend" aria-label="Circle size represents number of graduates per major">
+          <span class="size-legend-label">CIRCLE SIZE: GRADUATES</span>
+          <div class="size-legend-items" id="size-legend-items"></div>
+        </div>
       </div>
     </section>
 
@@ -102,7 +89,7 @@
           <p id="status-text">Loading TidyTuesday 2026 Week 42 dataset...</p>
         </div>
 
-        <svg id="scatter-svg" class="scatter-svg" viewBox="0 0 802 478" role="img" aria-label="Scatter plot comparing AI occupational exposure against median starting salary for U.S. college majors"></svg>
+        <svg id="scatter-svg" class="scatter-svg" viewBox="0 0 802 478" role="img" aria-label="Scatter plot comparing AI occupational exposure against median starting salary for U.S. college majors, sized by graduate count"></svg>
       </div>
 
       <!-- Bottom Callout Band: Paired Quadrant Cards Strictly Below the X-Axis -->
@@ -134,7 +121,7 @@
         <p>
           You do not have to choose between high pay and AI safety, but data-heavy desk majors sit directly in the path of generative AI.
         </p>
-        <p class="interaction-hint">Click any field or zone card to isolate majors. Hover any dot for details.</p>
+        <p class="interaction-hint">Click any field or zone card to isolate majors. Hover any dot for graduate volume and pay details.</p>
       </aside>
     </section>
 

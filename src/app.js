@@ -128,6 +128,31 @@ function formatShortDollar(val) {
   return '$' + Math.round(val / 1000) + 'k';
 }
 
+function formatCompactCount(val) {
+  if (!Number.isFinite(val) || val <= 0) return '0';
+  if (val >= 1000000) {
+    const m = val / 1000000;
+    return (m >= 10 ? Math.round(m) : Number(m.toFixed(1))) + 'M';
+  }
+  if (val >= 1000) {
+    const k = val / 1000;
+    return (k >= 10 ? Math.round(k) : Number(k.toFixed(1))) + 'k';
+  }
+  return Math.round(val).toLocaleString('en-US');
+}
+
+function niceRound(val) {
+  if (!Number.isFinite(val) || val <= 0) return 100;
+  const exp = Math.floor(Math.log10(val));
+  const base = Math.pow(10, exp);
+  const frac = val / base;
+  let nice = 1;
+  if (frac >= 7.5) nice = 10;
+  else if (frac >= 3.5) nice = 5;
+  else if (frac >= 1.5) nice = 2;
+  return nice * base;
+}
+
 function formatSigned(val) {
   if (!Number.isFinite(val)) return 'N/A';
   const sign = val > 0 ? '+' : '';
@@ -249,7 +274,7 @@ function normalizeRecords(rawRows) {
 }
 
 // -----------------------------------------------------------------------------
-// SVG Helpers & Chart Rendering
+// SVG Helpers & Chart Scales
 // -----------------------------------------------------------------------------
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -262,6 +287,13 @@ function svgEl(tag, attrs = {}, text = null) {
     el.textContent = text;
   }
   return el;
+}
+
+function createRadiusScale(majors) {
+  const maxGrads = Math.max(...majors.map((m) => m.n_graduates || 0), 0);
+  const denom = Math.max(maxGrads, 1);
+  const rScale = (g) => 3.6 + Math.sqrt(Math.max(g, 0) / denom) * 4.2;
+  return { rScale, maxGrads };
 }
 
 function getScales(majors, metricKey) {
@@ -288,10 +320,9 @@ function getScales(majors, metricKey) {
   const xScale = (v) => PLOT.left + ((v - domXMin) / (domXMax - domXMin)) * plotW;
   const yScale = (v) => PLOT.bottom - ((v - domYMin) / (domYMax - domYMin)) * plotH;
 
-  const maxGrads = Math.max(...majors.map((m) => m.n_graduates || 0), 1);
-  const rScale = (g) => 3.6 + Math.sqrt(Math.max(g, 0) / maxGrads) * 4.2;
+  const { rScale, maxGrads } = createRadiusScale(majors);
 
-  return { xScale, yScale, rScale, domXMin, domXMax, domYMin, domYMax };
+  return { xScale, yScale, rScale, maxGrads, domXMin, domXMax, domYMin, domYMax };
 }
 
 function getQuadrantKey(m, medX, medY, metricKey) {
@@ -313,6 +344,9 @@ function getQuadrantLabel(quadKey) {
   }
 }
 
+// -----------------------------------------------------------------------------
+// Legends & Interactive Controls
+// -----------------------------------------------------------------------------
 function buildLegend() {
   const list = document.getElementById('legend-list');
   const resetBtn = document.getElementById('legend-reset');
@@ -358,6 +392,65 @@ function buildLegend() {
     state.activeQuadrant = null;
     applyHighlights();
   });
+}
+
+function buildSizeLegend() {
+  const container = document.getElementById('size-legend');
+  const itemsEl = document.getElementById('size-legend-items');
+  if (!container || !itemsEl) return;
+
+  const { rScale, maxGrads } = createRadiusScale(state.majors);
+  if (maxGrads <= 0) {
+    container.hidden = true;
+    return;
+  }
+
+  container.hidden = false;
+  itemsEl.innerHTML = '';
+
+  // Select three clean, distinct graduate benchmarks matching the plot's exact radius scale
+  const rawSteps = [maxGrads * 0.03, maxGrads * 0.3, maxGrads * 0.92];
+  const benchmarks = [];
+  for (const raw of rawSteps) {
+    const rounded = Math.min(maxGrads, Math.max(100, niceRound(raw)));
+    if (!benchmarks.includes(rounded)) {
+      benchmarks.push(rounded);
+    }
+  }
+  benchmarks.sort((a, b) => a - b);
+
+  for (const val of benchmarks) {
+    const r = rScale(val);
+    const box = Math.ceil(r * 2 + 3);
+    const half = (box / 2).toFixed(1);
+
+    const item = document.createElement('span');
+    item.className = 'size-legend-item';
+    item.title = `${val.toLocaleString('en-US')} graduates`;
+
+    const svg = svgEl('svg', {
+      width: String(box),
+      height: String(box),
+      viewBox: `0 0 ${box} ${box}`,
+      class: 'size-legend-svg',
+      'aria-hidden': 'true'
+    });
+    svg.appendChild(svgEl('circle', {
+      cx: half,
+      cy: half,
+      r: r.toFixed(2),
+      fill: 'rgba(200, 214, 235, 0.3)',
+      stroke: 'rgba(245, 248, 255, 0.85)',
+      'stroke-width': '1'
+    }));
+
+    const label = document.createElement('span');
+    label.className = 'size-legend-val';
+    label.textContent = formatCompactCount(val);
+
+    item.append(svg, label);
+    itemsEl.appendChild(item);
+  }
 }
 
 function bindQuadrantCards() {
@@ -411,6 +504,9 @@ function updateQuadrantCounts() {
   document.getElementById('count-squeezed').textContent = `${counts.squeezed} majors`;
 }
 
+// -----------------------------------------------------------------------------
+// Scatter Plot Renderer
+// -----------------------------------------------------------------------------
 function renderScatter() {
   const svg = document.getElementById('scatter-svg');
   svg.innerHTML = '';
@@ -668,18 +764,19 @@ function renderScatter() {
 }
 
 // -----------------------------------------------------------------------------
-// Plain-Language Narrative Tooltip (Zero Em Dashes)
+// Plain-Language Narrative Tooltip (Includes Graduate Volume, Zero Em Dashes)
 // -----------------------------------------------------------------------------
 const tooltipEl = document.getElementById('tooltip');
 
 function showTooltip(evt, m, quadKey) {
   const quad = getQuadrantLabel(quadKey);
+  const gradLead = m.n_graduates > 0 ? `${m.n_graduates.toLocaleString('en-US')} graduates` : 'Graduates';
   const instClause = m.n_institutions ? ` across ${m.n_institutions.toLocaleString('en-US')} institutions` : '';
   const pctClause = Number.isFinite(m.ai_exposure_percentile)
     ? ` (${ordinal(m.ai_exposure_percentile)} percentile across all ${state.majors.length} majors)`
     : '';
 
-  const narrative = `Graduates earn a median ${formatCurrency(m.median_starting_salary)} one year after graduation${instClause}. Its overall AI exposure score is ${formatSigned(m.ai_exposure)}${pctClause}.`;
+  const narrative = `${gradLead}${instClause} earn a median ${formatCurrency(m.median_starting_salary)} one year after graduation. Overall AI exposure scores ${formatSigned(m.ai_exposure)}${pctClause}.`;
 
   tooltipEl.innerHTML = `
     <div class="tooltip-title">${escapeHtml(m.field_of_study)}</div>
@@ -826,6 +923,7 @@ async function loadDataset() {
 
     document.getElementById('major-count-badge').textContent = state.majors.length;
     buildLegend();
+    buildSizeLegend();
     bindQuadrantCards();
     bindMetricToggles();
     renderScatter();
