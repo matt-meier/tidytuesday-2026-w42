@@ -55,20 +55,21 @@ const METRIC_META = {
   }
 };
 
-// SVG Layout Coordinates (matches viewBox="0 0 802 742")
+// SVG Layout Coordinates (matches viewBox="0 0 802 478"; 100% free of overlays)
 const PLOT = {
   width: 802,
-  height: 742,
-  left: 72,
-  right: 786,
-  top: 22,
-  bottom: 656
+  height: 478,
+  left: 64,
+  right: 788,
+  top: 18,
+  bottom: 416
 };
 
 const state = {
   majors: [],
   activeMetric: 'ai_exposure',
   activeGroup: null,
+  activeQuadrant: null,
   medianX: 0,
   medianY: 50000
 };
@@ -270,16 +271,16 @@ function getScales(majors, metricKey) {
   const minX = Math.min(...xVals);
   const maxX = Math.max(...xVals);
   const spanX = Math.max(maxX - minX, 0.5);
-  // Generous linear left padding keeps all points clear of the floating legend card
-  const domXMin = minX - spanX * 0.34;
-  const domXMax = maxX + spanX * 0.08;
+  // Clean 6% linear breathing room on both sides (zero overlay boxes inside the plot)
+  const domXMin = minX - spanX * 0.06;
+  const domXMax = maxX + spanX * 0.06;
 
   const minY = Math.min(...yVals);
   const maxY = Math.max(...yVals);
   const spanY = Math.max(maxY - minY, 20000);
-  // Honest linear Y domain with top/bottom breathing room so quadrant cards never cover data marks
-  const domYMin = Math.max(0, Math.floor((minY - spanY * 0.34) / 10000) * 10000);
-  const domYMax = Math.ceil((maxY + spanY * 0.28) / 10000) * 10000;
+  // Honest linear Y domain with clean 7% breathing room
+  const domYMin = Math.max(0, Math.floor((minY - spanY * 0.07) / 5000) * 5000);
+  const domYMax = Math.ceil((maxY + spanY * 0.07) / 5000) * 5000;
 
   const plotW = PLOT.right - PLOT.left;
   const plotH = PLOT.bottom - PLOT.top;
@@ -288,19 +289,28 @@ function getScales(majors, metricKey) {
   const yScale = (v) => PLOT.bottom - ((v - domYMin) / (domYMax - domYMin)) * plotH;
 
   const maxGrads = Math.max(...majors.map((m) => m.n_graduates || 0), 1);
-  const rScale = (g) => 3.4 + Math.sqrt(Math.max(g, 0) / maxGrads) * 3.8;
+  const rScale = (g) => 3.6 + Math.sqrt(Math.max(g, 0) / maxGrads) * 4.2;
 
   return { xScale, yScale, rScale, domXMin, domXMax, domYMin, domYMax };
 }
 
-function getQuadrantLabel(m, medX, medY, metricKey) {
+function getQuadrantKey(m, medX, medY, metricKey) {
   const xVal = m[metricKey];
   const highPay = m.median_starting_salary >= medY;
   const highExp = xVal >= medX;
-  if (highPay && !highExp) return 'The Fortified Zone';
-  if (highPay && highExp) return 'High-Exposure Paydays';
-  if (!highPay && !highExp) return 'Hands-On Havens';
-  return 'The Squeezed Zone';
+  if (highPay && !highExp) return 'fortified';
+  if (highPay && highExp) return 'paydays';
+  if (!highPay && !highExp) return 'havens';
+  return 'squeezed';
+}
+
+function getQuadrantLabel(quadKey) {
+  switch (quadKey) {
+    case 'fortified': return 'The Fortified Zone';
+    case 'paydays': return 'High-Exposure Paydays';
+    case 'havens': return 'Hands-On Havens';
+    default: return 'The Squeezed Zone';
+  }
 }
 
 function buildLegend() {
@@ -336,7 +346,7 @@ function buildLegend() {
     btn.append(swatch, label, qty);
     btn.addEventListener('click', () => {
       state.activeGroup = state.activeGroup === grp.id ? null : grp.id;
-      applyGroupHighlight();
+      applyHighlights();
     });
 
     li.appendChild(btn);
@@ -345,13 +355,24 @@ function buildLegend() {
 
   resetBtn.addEventListener('click', () => {
     state.activeGroup = null;
-    applyGroupHighlight();
+    state.activeQuadrant = null;
+    applyHighlights();
   });
 }
 
-function applyGroupHighlight() {
-  const resetBtn = document.getElementById('legend-reset');
-  resetBtn.hidden = !state.activeGroup;
+function bindQuadrantCards() {
+  document.querySelectorAll('.quadrant-card[data-quadrant]').forEach((card) => {
+    card.addEventListener('click', () => {
+      const q = card.dataset.quadrant;
+      state.activeQuadrant = state.activeQuadrant === q ? null : q;
+      applyHighlights();
+    });
+  });
+}
+
+function applyHighlights() {
+  const hasFilter = Boolean(state.activeGroup || state.activeQuadrant);
+  document.getElementById('legend-reset').hidden = !hasFilter;
 
   document.querySelectorAll('.legend-item-btn').forEach((btn) => {
     const isMatch = btn.dataset.group === state.activeGroup;
@@ -359,34 +380,35 @@ function applyGroupHighlight() {
     btn.classList.toggle('is-dimmed', Boolean(state.activeGroup && !isMatch));
   });
 
+  document.querySelectorAll('.quadrant-card[data-quadrant]').forEach((card) => {
+    const isMatch = card.dataset.quadrant === state.activeQuadrant;
+    card.classList.toggle('is-active', Boolean(state.activeQuadrant && isMatch));
+    card.classList.toggle('is-dimmed', Boolean(state.activeQuadrant && !isMatch));
+    card.setAttribute('aria-pressed', String(Boolean(state.activeQuadrant && isMatch)));
+  });
+
   document.querySelectorAll('.major-dot').forEach((dot) => {
-    const isMatch = dot.dataset.group === state.activeGroup;
-    dot.classList.toggle('is-dimmed', Boolean(state.activeGroup && !isMatch));
+    const groupOk = !state.activeGroup || dot.dataset.group === state.activeGroup;
+    const quadOk = !state.activeQuadrant || dot.dataset.quadrant === state.activeQuadrant;
+    dot.classList.toggle('is-dimmed', !(groupOk && quadOk));
   });
 }
 
 function updateQuadrantCounts() {
   const metricKey = state.activeMetric;
-  let fortified = 0;
-  let paydays = 0;
-  let havens = 0;
-  let squeezed = 0;
+  const counts = { fortified: 0, paydays: 0, havens: 0, squeezed: 0 };
 
   for (const m of state.majors) {
     const xVal = m[metricKey];
     if (!Number.isFinite(xVal)) continue;
-    const highPay = m.median_starting_salary >= state.medianY;
-    const highExp = xVal >= state.medianX;
-    if (highPay && !highExp) fortified++;
-    else if (highPay && highExp) paydays++;
-    else if (!highPay && !highExp) havens++;
-    else squeezed++;
+    const q = getQuadrantKey(m, state.medianX, state.medianY, metricKey);
+    counts[q]++;
   }
 
-  document.getElementById('count-fortified').textContent = `${fortified} majors`;
-  document.getElementById('count-paydays').textContent = `${paydays} majors`;
-  document.getElementById('count-havens').textContent = `${havens} majors`;
-  document.getElementById('count-squeezed').textContent = `${squeezed} majors`;
+  document.getElementById('count-fortified').textContent = `${counts.fortified} majors`;
+  document.getElementById('count-paydays').textContent = `${counts.paydays} majors`;
+  document.getElementById('count-havens').textContent = `${counts.havens} majors`;
+  document.getElementById('count-squeezed').textContent = `${counts.squeezed} majors`;
 }
 
 function renderScatter() {
@@ -408,7 +430,7 @@ function renderScatter() {
   const defs = svgEl('defs');
 
   const glow = svgEl('filter', { id: 'dot-glow', x: '-45%', y: '-45%', width: '190%', height: '190%' });
-  glow.appendChild(svgEl('feGaussianBlur', { stdDeviation: '2.4', result: 'blur' }));
+  glow.appendChild(svgEl('feGaussianBlur', { stdDeviation: '2.2', result: 'blur' }));
   const merge = svgEl('feMerge');
   merge.appendChild(svgEl('feMergeNode', { in: 'blur' }));
   merge.appendChild(svgEl('feMergeNode', { in: 'SourceGraphic' }));
@@ -422,13 +444,12 @@ function renderScatter() {
     { id: 'q-br', color: '#E84A9C', cx: '65%', cy: '65%' }
   ];
   for (const qg of quadGrads) {
-    const rg = svgEl('radialGradient', { id: qg.id, cx: qg.cx, cy: qg.cy, r: '75%' });
+    const rg = svgEl('radialGradient', { id: qg.id, cx: qg.cx, cy: qg.cy, r: '78%' });
     rg.appendChild(svgEl('stop', { offset: '0%', 'stop-color': qg.color, 'stop-opacity': '0.16' }));
-    rg.appendChild(svgEl('stop', { offset: '100%', 'stop-color': qg.color, 'stop-opacity': '0.01' }));
+    rg.appendChild(svgEl('stop', { offset: '100%', 'stop-color': qg.color, 'stop-opacity': '0.015' }));
     defs.appendChild(rg);
   }
 
-  // Axis arrow markers
   const mkArrow = (id, fill) => {
     const marker = svgEl('marker', {
       id,
@@ -443,9 +464,6 @@ function renderScatter() {
     defs.appendChild(marker);
   };
   mkArrow('arrow-axis', '#9eb5d9');
-  mkArrow('arrow-emerald', '#2EE59D');
-  mkArrow('arrow-amber', '#F5A623');
-  mkArrow('arrow-cyan', '#4CC9F0');
   mkArrow('arrow-magenta', '#E84A9C');
 
   svg.appendChild(defs);
@@ -507,10 +525,10 @@ function renderScatter() {
   // Median crosshair lines
   axisLayer.appendChild(svgEl('line', {
     x1: medPxX,
-    y1: PLOT.top + 6,
+    y1: PLOT.top,
     x2: medPxX,
     y2: PLOT.bottom,
-    stroke: 'rgba(200, 214, 235, 0.28)',
+    stroke: 'rgba(200, 214, 235, 0.3)',
     'stroke-width': '1.2',
     'stroke-dasharray': '4 4'
   }));
@@ -519,15 +537,15 @@ function renderScatter() {
     y1: medPxY,
     x2: PLOT.right,
     y2: medPxY,
-    stroke: 'rgba(200, 214, 235, 0.28)',
+    stroke: 'rgba(200, 214, 235, 0.3)',
     'stroke-width': '1.2',
     'stroke-dasharray': '4 4'
   }));
 
-  // Inline median annotations
+  // Clean inline median annotations tucked along the crosshair ends
   axisLayer.appendChild(svgEl('text', {
     x: medPxX + 6,
-    y: PLOT.top + 18,
+    y: PLOT.top + 12,
     class: 'median-tag'
   }, `Median exposure (${formatSigned(state.medianX)})`));
 
@@ -562,9 +580,9 @@ function renderScatter() {
   // Y Axis Title (rotated)
   const yMid = (PLOT.top + PLOT.bottom) / 2;
   axisLayer.appendChild(svgEl('text', {
-    x: 18,
+    x: 16,
     y: yMid,
-    transform: `rotate(-90 18 ${yMid})`,
+    transform: `rotate(-90 16 ${yMid})`,
     'text-anchor': 'middle',
     class: 'axis-label-main'
   }, 'Median Starting Salary (1 Year Post-Grad)'));
@@ -585,9 +603,9 @@ function renderScatter() {
   }, 'HIGHLY EXPOSED (HIGH OVERLAP)'));
 
   axisLayer.appendChild(svgEl('line', {
-    x1: 270,
+    x1: 256,
     y1: PLOT.bottom + 20,
-    x2: 530,
+    x2: 538,
     y2: PLOT.bottom + 20,
     stroke: '#e84a9c',
     'stroke-width': '2',
@@ -603,26 +621,6 @@ function renderScatter() {
 
   svg.appendChild(axisLayer);
 
-  // Dynamic leader pointers connecting top quadrant cards cleanly into each quadrant
-  const pointerLayer = svgEl('g', { class: 'pointer-layer', opacity: '0.85' });
-  const leftTurnX = Math.max(330, Math.min(medPxX - 24, 420));
-  const rightTurnX = Math.min(534, Math.max(medPxX + 24, 470));
-  pointerLayer.appendChild(svgEl('path', {
-    d: `M 306 60 L ${leftTurnX.toFixed(1)} 60 L ${leftTurnX.toFixed(1)} 148`,
-    fill: 'none',
-    stroke: '#2EE59D',
-    'stroke-width': '1.4',
-    'marker-end': 'url(#arrow-emerald)'
-  }));
-  pointerLayer.appendChild(svgEl('path', {
-    d: `M 552 60 L ${rightTurnX.toFixed(1)} 60 L ${rightTurnX.toFixed(1)} 148`,
-    fill: 'none',
-    stroke: '#F5A623',
-    'stroke-width': '1.4',
-    'marker-end': 'url(#arrow-amber)'
-  }));
-  svg.appendChild(pointerLayer);
-
   // Scatter Marks Layer (sorted so smaller dots render on top of larger dots for hover precision)
   const sortedMajors = [...majors].sort((a, b) => (b.n_graduates || 0) - (a.n_graduates || 0));
   const dotLayer = svgEl('g', { class: 'dots-layer', filter: 'url(#dot-glow)' });
@@ -631,23 +629,25 @@ function renderScatter() {
     const cx = scales.xScale(m[metricKey]);
     const cy = scales.yScale(m.median_starting_salary);
     const r = scales.rScale(m.n_graduates);
+    const quadKey = getQuadrantKey(m, state.medianX, state.medianY, metricKey);
 
     const circle = svgEl('circle', {
       cx: cx.toFixed(2),
       cy: cy.toFixed(2),
       r: r.toFixed(2),
       fill: m.color,
-      'fill-opacity': '0.86',
-      stroke: 'rgba(255,255,255,0.22)',
+      'fill-opacity': '0.88',
+      stroke: 'rgba(255,255,255,0.24)',
       'stroke-width': '0.6',
       class: 'major-dot',
-      'data-group': m.groupId
+      'data-group': m.groupId,
+      'data-quadrant': quadKey
     });
 
     circle.addEventListener('mouseenter', (evt) => {
       circle.classList.add('is-hovered');
       circle.setAttribute('r', (r + 2.4).toFixed(2));
-      showTooltip(evt, m);
+      showTooltip(evt, m, quadKey);
     });
 
     circle.addEventListener('mousemove', (evt) => {
@@ -664,7 +664,7 @@ function renderScatter() {
   }
 
   svg.appendChild(dotLayer);
-  applyGroupHighlight();
+  applyHighlights();
 }
 
 // -----------------------------------------------------------------------------
@@ -672,8 +672,8 @@ function renderScatter() {
 // -----------------------------------------------------------------------------
 const tooltipEl = document.getElementById('tooltip');
 
-function showTooltip(evt, m) {
-  const quad = getQuadrantLabel(m, state.medianX, state.medianY, state.activeMetric);
+function showTooltip(evt, m, quadKey) {
+  const quad = getQuadrantLabel(quadKey);
   const instClause = m.n_institutions ? ` across ${m.n_institutions.toLocaleString('en-US')} institutions` : '';
   const pctClause = Number.isFinite(m.ai_exposure_percentile)
     ? ` (${ordinal(m.ai_exposure_percentile)} percentile across all ${state.majors.length} majors)`
@@ -826,6 +826,7 @@ async function loadDataset() {
 
     document.getElementById('major-count-badge').textContent = state.majors.length;
     buildLegend();
+    bindQuadrantCards();
     bindMetricToggles();
     renderScatter();
     overlay.hidden = true;

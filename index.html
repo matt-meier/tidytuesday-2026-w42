@@ -11,7 +11,6 @@
 </head>
 <body>
   <main class="poster" id="poster" aria-label="AI Occupational Exposure versus Graduate Starting Salary Infographic">
-    <!-- Subtle editorial frame accents -->
     <div class="frame-accent frame-accent-top" aria-hidden="true"></div>
 
     <!-- Header Section (TidyTuesday top pill intentionally omitted; included in footer) -->
@@ -32,88 +31,86 @@
       <p class="subtitle">
         Mapping <strong>AI Occupational Exposure</strong> vs. <strong>Median Starting Pay</strong> Across <span id="major-count-badge">285</span> U.S. College Majors
       </p>
-
-      <p class="lead-context">
-        High AI overlap does not equal low pay. Many top-earning business, legal, and tech majors sit squarely in the path of generative AI, while hands-on healthcare and engineering fields combine strong salaries with lower exposure.
-      </p>
     </header>
 
-    <!-- Main Graphic Canvas -->
-    <section class="viz-stage" aria-label="Interactive scatter plot of college majors">
-      <div class="viz-container" id="viz-container">
-        <!-- Loading / Status overlay -->
-        <div class="status-overlay" id="status-overlay" role="status" aria-live="polite">
-          <div class="spinner" aria-hidden="true"></div>
-          <p id="status-text">Loading TidyTuesday 2026 Week 42 dataset...</p>
-        </div>
+    <!-- Control Strip: Inline Interactive Field Legend + Exposure Lens (Outside the chart) -->
+    <section class="control-strip" aria-label="Filter by broad field or switch AI exposure lens">
+      <div class="legend-strip" role="group" aria-label="Broad field filter">
+        <ul class="legend-list" id="legend-list"></ul>
+        <button type="button" class="legend-reset" id="legend-reset" hidden>Reset</button>
+      </div>
+      <div class="metric-bar" role="group" aria-label="Select AI exposure measure">
+        <span class="metric-bar-label">LENS:</span>
+        <button type="button" class="metric-btn is-active" data-metric="ai_exposure">Overall AIOE</button>
+        <button type="button" class="metric-btn" data-metric="ai_exposure_language">Language AI</button>
+        <button type="button" class="metric-btn" data-metric="ai_exposure_image">Image AI</button>
+      </div>
+    </section>
 
-        <!-- SVG Scatter Plot rendered dynamically by src/app.js -->
-        <svg id="scatter-svg" class="scatter-svg" viewBox="0 0 802 742" role="img" aria-label="Scatter plot comparing AI occupational exposure against median starting salary for 285 college majors"></svg>
-
-        <!-- Quadrant Callout: Top-Left -->
-        <aside class="quadrant-card card-fortified" aria-label="The Fortified Zone callout">
+    <!-- Main Editorial Stage: Stacked Bands Guarantee Zero Overlap with Data Marks -->
+    <section class="viz-stage" aria-label="Quadrant analysis and scatter plot of college majors">
+      <!-- Top Callout Band: Sits strictly ABOVE the scatter plot -->
+      <div class="quadrant-band quadrant-band-top">
+        <button type="button" class="quadrant-card card-fortified" data-quadrant="fortified" aria-pressed="false">
           <div class="card-header">
             <h2 class="card-title">THE FORTIFIED ZONE</h2>
             <span class="card-count" id="count-fortified"></span>
           </div>
           <p class="card-sub">High pay, lower AI exposure</p>
-          <p class="card-body">Healthcare, nursing, and specialized engineering majors earn strong starting pay while staying insulated by hands-on clinical or physical work.</p>
-        </aside>
+          <p class="card-body">Healthcare, nursing, and specialized engineering earn strong starting pay while staying insulated by hands-on clinical or physical work.</p>
+          <span class="card-pointer pointer-down" aria-hidden="true"></span>
+        </button>
 
-        <!-- Quadrant Callout: Top-Right -->
-        <aside class="quadrant-card card-paydays" aria-label="High-Exposure Paydays callout">
+        <button type="button" class="quadrant-card card-paydays" data-quadrant="paydays" aria-pressed="false">
           <div class="card-header">
             <h2 class="card-title">HIGH-EXPOSURE PAYDAYS</h2>
             <span class="card-count" id="count-paydays"></span>
           </div>
           <p class="card-sub">High pay, high AI exposure</p>
-          <p class="card-body">Finance, computer science, and legal majors overlap heavily with AI yet command top salaries, indicating AI may amplify rather than replace these roles.</p>
-        </aside>
+          <p class="card-body">Finance, computer science, and legal majors overlap heavily with AI yet command top pay, indicating AI may amplify rather than replace them.</p>
+          <span class="card-pointer pointer-down" aria-hidden="true"></span>
+        </button>
+      </div>
 
-        <!-- Interactive Field Legend -->
-        <aside class="legend-card" aria-label="Field category legend">
-          <div class="legend-heading">
-            <span>BROAD FIELD</span>
-            <button type="button" class="legend-reset" id="legend-reset" hidden>Show all</button>
-          </div>
-          <ul class="legend-list" id="legend-list"></ul>
-          <p class="legend-cue">Click a field to spotlight. Hover dots for major details.</p>
-        </aside>
+      <!-- Unobstructed Scatter Plot Canvas: 100% Dedicated to Data Points & Axes -->
+      <div class="viz-container" id="viz-container">
+        <div class="status-overlay" id="status-overlay" role="status" aria-live="polite">
+          <div class="spinner" aria-hidden="true"></div>
+          <p id="status-text">Loading TidyTuesday 2026 Week 42 dataset...</p>
+        </div>
 
-        <!-- Quadrant Callout: Bottom-Left -->
-        <aside class="quadrant-card card-havens" aria-label="Hands-On Havens callout">
+        <svg id="scatter-svg" class="scatter-svg" viewBox="0 0 802 478" role="img" aria-label="Scatter plot comparing AI occupational exposure against median starting salary for U.S. college majors"></svg>
+      </div>
+
+      <!-- Bottom Callout Band: Sits strictly BELOW the X-axis -->
+      <div class="quadrant-band quadrant-band-bottom">
+        <button type="button" class="quadrant-card card-havens" data-quadrant="havens" aria-pressed="false">
+          <span class="card-pointer pointer-up" aria-hidden="true"></span>
           <div class="card-header">
             <h2 class="card-title">HANDS-ON HAVENS</h2>
             <span class="card-count" id="count-havens"></span>
           </div>
           <p class="card-sub">Lower pay, lower AI exposure</p>
-          <p class="card-body">Education, culinary, agriculture, and recreation majors rely on in-person human work that limits AI overlap, though starting salaries lag.</p>
+          <p class="card-body">Education, culinary, agriculture, and recreation rely on in-person work that limits AI overlap, though starting salaries lag.</p>
+        </button>
+
+        <aside class="key-finding-card" aria-label="Key finding summary">
+          <div class="key-finding-label">KEY FINDING</div>
+          <p>
+            You do not have to choose between high pay and AI safety, but data-heavy desk majors sit directly in the path of generative AI.
+          </p>
+          <p class="interaction-hint">Click any field or zone card to isolate majors. Hover any dot for details.</p>
         </aside>
 
-        <!-- Quadrant Callout: Bottom-Right -->
-        <aside class="quadrant-card card-squeezed" aria-label="The Squeezed Zone callout">
+        <button type="button" class="quadrant-card card-squeezed" data-quadrant="squeezed" aria-pressed="false">
+          <span class="card-pointer pointer-up" aria-hidden="true"></span>
           <div class="card-header">
             <h2 class="card-title">THE SQUEEZED ZONE</h2>
             <span class="card-count" id="count-squeezed"></span>
           </div>
           <p class="card-sub">Lower pay, high AI exposure</p>
-          <p class="card-body">Communications, journalism, and writing-focused majors pair modest starting pay with heavy overlap across text and image generation tools.</p>
-        </aside>
-
-        <!-- Key Finding Callout -->
-        <aside class="key-finding-card" aria-label="Key finding summary">
-          <p>
-            <strong>KEY FINDING:</strong> You do not have to choose between high pay and AI safety, but data-heavy desk majors sit directly in the path of generative AI.
-          </p>
-        </aside>
-      </div>
-
-      <!-- Subtle X-Axis Exposure Metric Toggle -->
-      <div class="metric-bar" role="group" aria-label="Select AI exposure measure">
-        <span class="metric-bar-label">EXPOSURE LENS:</span>
-        <button type="button" class="metric-btn is-active" data-metric="ai_exposure">Overall AIOE</button>
-        <button type="button" class="metric-btn" data-metric="ai_exposure_language">Language AI</button>
-        <button type="button" class="metric-btn" data-metric="ai_exposure_image">Image AI</button>
+          <p class="card-body">Communications, journalism, and writing majors pair modest starting pay with heavy overlap across text and image AI tools.</p>
+        </button>
       </div>
     </section>
 
